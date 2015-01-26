@@ -44,11 +44,6 @@
 #define P_TRANSISTORS 3
 #define NP_COMMON_CATHODE 1
 #define NP_COMMON_ANODE 0
-#define SEGMENTS_VIA_74HC595 1
-#define RESISTORS_ON_SEGMENTS 1
-
-// Use 74HC595 shift register for segments
-//#define SEGMENTS_VIA_74HC595 1
 
 class SevSeg
 {

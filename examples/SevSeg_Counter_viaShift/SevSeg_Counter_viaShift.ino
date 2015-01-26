@@ -1,5 +1,3 @@
-#include <SevSeg.h>
-
 /* SevSeg Counter Example
  
  Copyright 2014 Dean Reading,
@@ -22,6 +20,9 @@
  */
 
 #define RESISTORS_ON_SEGMENTS 1
+
+// Use 74HC595 shift register for segments
+#define SEGMENTS_VIA_74HC595 1
 
 #include "SevSeg.h"
 
