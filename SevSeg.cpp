@@ -52,23 +52,19 @@ const long SevSeg::powersOf10[] = {
   100000000,
   1000000000}; // 10^9
 
+const long MAX_LED_ON_TIME = 3000;
 
 // SevSeg
 /******************************************************************************/
 SevSeg::SevSeg()
 {
   // Initial value
-  ledOnTime = 2000; // Corresponds to a brightness of 100
+  ledOnTime = MAX_LED_ON_TIME; // Corresponds to a brightness of 100
   numDigits = 0;
 }
 
+void SevSeg::init(byte hardwareConfig, byte numDigitsIn, byte digitPinsIn[]) {
 
-// begin
-/******************************************************************************/
-// Saves the input pin numbers to the class and sets up the pins to be used.
-
-void SevSeg::begin(byte hardwareConfig, byte numDigitsIn, 
-                  byte digitPinsIn[], byte segmentPinsIn[]) {
   numDigits = numDigitsIn;
 
   digitCodes = new byte[numDigits];
@@ -101,28 +97,51 @@ void SevSeg::begin(byte hardwareConfig, byte numDigitsIn,
   segmentOff = !segmentOn;
 
   // Save the input pin numbers to library variables
-  for (byte segmentNum = 0 ; segmentNum < 8 ; segmentNum++) {
-    segmentPins[segmentNum] = segmentPinsIn[segmentNum];
-  }
-
   for (byte digitNum = 0 ; digitNum < numDigits ; digitNum++) {
     digitPins[digitNum] = digitPinsIn[digitNum];
+    pinMode(digitPins[digitNum], OUTPUT);
   }
+
+}
+
+
+// begin
+/******************************************************************************/
+// Saves the input pin numbers to the class and sets up the pins to be used.
+
+#ifndef SEGMENTS_VIA_74HC595
+void SevSeg::begin(byte hardwareConfig, byte numDigitsIn, 
+                  byte digitPinsIn[], byte segmentPinsIn[]) {
+  
+  // init digit pins
+  init(hardwareConfig, numDigitsIn, digitPinsIn);
 
   // Set the pins as outputs, and turn them off
-  for (byte digit=0 ; digit < numDigits ; digit++) {
-    pinMode(digitPins[digit], OUTPUT);
-    digitalWrite(digitPins[digit], digitOff);
-  }
-
-  for (byte segmentNum=0 ; segmentNum < 8 ; segmentNum++) {
+  for (byte segmentNum = 0 ; segmentNum < 8 ; segmentNum++) {
+    segmentPins[segmentNum] = segmentPinsIn[segmentNum];
     pinMode(segmentPins[segmentNum], OUTPUT);
     digitalWrite(segmentPins[segmentNum], segmentOff);
   }
 
   setNewNum(0,0); // Initialise the number displayed to 0
 }
+#else
+void SevSeg::begin(byte hardwareConfig, byte numDigitsIn, 
+                  byte digitPinsIn[], byte shiftRegisterPinsIn[]) {
 
+  // init digit pins
+  init(hardwareConfig, numDigitsIn, digitPinsIn);
+  
+  // init shift pins
+  for (byte shiftNum = 0 ; shiftNum < 3 ; shiftNum++) {
+    shiftRegisterPins[shiftNum] = shiftRegisterPinsIn[shiftNum];
+    pinMode(shiftRegisterPins[shiftNum], OUTPUT);
+    digitalWrite(shiftRegisterPins[shiftNum], LOW);
+  }
+
+  setNewNum(0,0); // Initialise the number displayed to 0
+}
+#endif
 
 // refreshDisplay
 /******************************************************************************/
@@ -133,6 +152,7 @@ void SevSeg::begin(byte hardwareConfig, byte numDigitsIn,
 // location of the current-limiting resistors.
 
 #if !(RESISTORS_ON_SEGMENTS)
+
 void SevSeg::refreshDisplay(){
   for (byte segmentNum=0 ; segmentNum < 8 ; segmentNum++) {
 
@@ -156,27 +176,40 @@ void SevSeg::refreshDisplay(){
 }
 
 #else
+
 void SevSeg::refreshDisplay(){
   for (byte digitNum=0 ; digitNum < numDigits ; digitNum++){
 
     // Illuminate the required segments for this digit
-    digitalWrite(digitPins[digitNum], digitOn);
+#ifdef SEGMENTS_VIA_74HC595    
+    byte code = segmentOn == HIGH ? digitCodes[digitNum] : ~(digitCodes[digitNum]);
+    digitalWrite(shiftRegisterPins[1], LOW);    
+    shiftOut(shiftRegisterPins[0], shiftRegisterPins[2], MSBFIRST, code);
+    digitalWrite(shiftRegisterPins[1], HIGH);
+#else
     for (byte segmentNum=0 ; segmentNum < 8 ; segmentNum++) {
       if (digitCodes[digitNum] & (1 << segmentNum)) { // Check a single bit
         digitalWrite(segmentPins[segmentNum], segmentOn);
       }
     }
+#endif
+
+    digitalWrite(digitPins[digitNum], digitOn);
 
     //Wait with lights on (to increase brightness)
     delayMicroseconds(ledOnTime);
 
     //Turn all lights off
+    digitalWrite(digitPins[digitNum], digitOff);
+#ifndef SEGMENTS_VIA_74HC595
     for (byte segmentNum=0 ; segmentNum < 8 ; segmentNum++) {
       digitalWrite(segmentPins[segmentNum], segmentOff);
-    }
-    digitalWrite(digitPins[digitNum], digitOff);
+    }    
+#endif
+
   }
 }
+
 #endif
 
 
@@ -185,7 +218,7 @@ void SevSeg::refreshDisplay(){
 
 void SevSeg::setBrightness(int brightness){
   brightness = constrain(brightness, 0, 100);
-  ledOnTime = map(brightness, 0, 100, 1, 2000);
+  ledOnTime = map(brightness, 0, 100, 1, MAX_LED_ON_TIME);
 }
 
 

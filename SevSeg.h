@@ -22,10 +22,10 @@
  */
 
 // If you use current-limiting resistors on your segment pins instead of the
-// digit pins, then change the '0' in the line below to a '1'
+// digit pins, then define RESISTORS_ON_SEGMENTS with '1' before the include of SevSeg.h
+#ifndef RESISTORS_ON_SEGMENTS
 #define RESISTORS_ON_SEGMENTS 0
-
-
+#endif
 
 #ifndef SevSeg_h
 #define SevSeg_h
@@ -43,7 +43,11 @@
 #define P_TRANSISTORS 3
 #define NP_COMMON_CATHODE 1
 #define NP_COMMON_ANODE 0
+#define SEGMENTS_VIA_74HC595 1
+#define RESISTORS_ON_SEGMENTS 1
 
+// Use 74HC595 shift register for segments
+//#define SEGMENTS_VIA_74HC595 1
 
 class SevSeg
 {
@@ -51,7 +55,13 @@ public:
   SevSeg();
 
   void refreshDisplay();
+
+#ifndef SEGMENTS_VIA_74HC595
   void begin(byte hardwareConfig, byte numDigitsIn, byte digitPinsIn[], byte segmentPinsIn[]);
+#else
+  void begin(byte hardwareConfig, byte numDigitsIn, byte digitPinsIn[], byte shiftRegisterPinsIn[]);
+#endif
+
   void setBrightness(int brightnessIn); // A number from 0..100
 
   void setNumber(long numToShow, byte decPlaces);
@@ -63,14 +73,22 @@ public:
   void setNumber(float numToShow, byte decPlaces);
 
 private:
+  void init(byte hardwareConfig, byte numDigitsIn, byte digitPinsIn[]);
+
   void setNewNum(long numToShow, byte decPlaces);
   void findDigits(long numToShow, byte decPlaces, byte nums[]);
   void setDigitCodes(byte nums[], byte decPlaces);
 
   boolean digitOn,digitOff,segmentOn,segmentOff;
   byte* digitPins; // Array length is not yet known
-  byte segmentPins[8];
   byte numDigits;
+
+#ifndef SEGMENTS_VIA_74HC595
+  byte segmentPins[8];
+#else
+  byte shiftRegisterPins[3]; // shift register pins in the order of data, latch, clock
+#endif
+
   byte* digitCodes; // Array length is not yet known
   int ledOnTime;
   const static long powersOf10[10];
