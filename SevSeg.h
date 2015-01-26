@@ -1,7 +1,8 @@
 /* SevSeg Library
  
  Copyright 2014 Dean Reading
- 
+ with some additions of Henry Jobst 2015 (optional use of a shift register for the segments)
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at 

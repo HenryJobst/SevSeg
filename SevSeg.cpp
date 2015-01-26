@@ -1,7 +1,8 @@
 /* SevSeg Library
  
  Copyright 2014 Dean Reading
- 
+ with some additions of Henry Jobst 2015 (optional use of a shift register for the segments)
+
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at 
@@ -22,6 +23,7 @@
  
  CHANGELOG
  
+ Version X.0 - January 2015; optional use of a shift register 74HC595 for the led segments
  Version 3.0 - November 2014
  Library re-design. A display with any number of digits can be used.
  Floats are supported. Support for using transistors for switching.
